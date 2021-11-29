@@ -17,7 +17,7 @@ struct User createUser(struct User user)
 {
     if (pointer == MAX_USERS - 1)
     {
-        printf("Max limit reached, cannot create new user");
+        printf("Max limit reached, cannot create new user\n");
         user.id = -1;
         return user;
     }
@@ -26,6 +26,39 @@ struct User createUser(struct User user)
     users[pointer] = user;
     pthread_mutex_unlock(&lock);
     return user;
+}
+
+//Only user.id is relevant for delete and read,
+//the remaining fields of user do not need to be initialised for these operations
+
+struct User deleteUser(struct User user)
+{
+    if(user.id>pointer||user.id<0)
+    {
+        printf("Entry does not exist\n");
+        return user;
+    }
+    pthread_mutex_lock(&lock);
+    struct User ret=users[user.id];
+    for(int i=user.id;i<pointer;i++)
+    {
+        users[i]=users[i+1];
+    }
+    pointer--;
+    pthread_mutex_unlock(&lock);
+    return ret;
+}
+
+//Mutex lock is not needed for read operation because db is not being updated
+
+struct User readUser(struct User user)
+{
+    if(user.id>pointer||user.id<0)
+    {
+        printf("Entry does not exist\n");
+        return user;
+    }
+    return users[user.id];
 }
 
 void *serveThread(void *args)
@@ -38,6 +71,14 @@ void *serveThread(void *args)
     {
         // Create new User
         send_data.user = createUser(received_data.user);
+    }
+    else if(received_data.delete)
+    {
+        send_data.user = deleteUser(received_data.user);
+    }
+    else if(received_data.read)
+    {
+        send_data.user = readUser(received_data.user);
     }
     write(new_socket, (struct data *)&send_data, sizeof(send_data));
     close(new_socket);

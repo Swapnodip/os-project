@@ -23,7 +23,7 @@ void displayUser(struct User user)
 
 int main()
 {
-    int sd, n;
+    int sd, n, id;
     struct sockaddr_in seraddress;
     struct data req;
     int requestType;
@@ -43,6 +43,20 @@ int main()
         scanf("%s", buf);
         strcpy(user.password, buf);
         request.create = 1;
+    }
+    else if(requestType == 2)
+    {
+        printf("Enter id of user to read\n");
+        scanf("%d",&id);
+        user.id = id;
+        request.read = 1;
+    }
+    else if(requestType == 4)
+    {
+        printf("Enter id of user to read\n");
+        scanf("%d",&id);
+        user.id = id;
+        request.delete = 1;
     }
     request.user = user;
     sd = socket(AF_INET, SOCK_STREAM, 0);
