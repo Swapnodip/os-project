@@ -18,7 +18,12 @@ void initRequest(struct data *request)
 
 void displayUser(struct User user)
 {
-    printf("ID: %d, Name: %s\n Email: %s\n", user.id, user.name, user.email);
+    if (user.id == -1)
+    {
+        printf("Invalid operation\n");
+        return;
+    }
+    printf("ID: %d\nName: %s\nEmail: %s\n", user.id, user.name, user.email);
 }
 
 int main()
@@ -29,7 +34,7 @@ int main()
     int requestType;
     struct data request, response;
     struct User user;
-    char buf[20];
+    char buf[30];
     printf("Enter 1 to create, 2 to read, 3 to update, 4 to delete\n");
     initRequest(&request);
     scanf("%d", &requestType);
@@ -44,17 +49,29 @@ int main()
         strcpy(user.password, buf);
         request.create = 1;
     }
-    else if(requestType == 2)
+    else if (requestType == 2)
     {
         printf("Enter id of user to read\n");
-        scanf("%d",&id);
+        scanf("%d", &id);
         user.id = id;
         request.read = 1;
     }
-    else if(requestType == 4)
+    else if (requestType == 3)
+    {
+        printf("Enter ID, name, email, and password of user to be updated\n");
+        scanf("%d", &user.id);
+        scanf("%s", buf);
+        strcpy(user.name, buf);
+        scanf("%s", buf);
+        strcpy(user.email, buf);
+        scanf("%s", buf);
+        strcpy(user.password, buf);
+        request.update = 1;
+    }
+    else if (requestType == 4)
     {
         printf("Enter id of user to read\n");
-        scanf("%d",&id);
+        scanf("%d", &id);
         user.id = id;
         request.delete = 1;
     }

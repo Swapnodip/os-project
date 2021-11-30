@@ -12,6 +12,15 @@
 struct User users[MAX_USERS];
 pthread_mutex_t lock;
 int pointer = -1;
+uint id = -1;
+
+// Pointer value won't always stay unique because of deletion of users. Hence for a uniquie ID we
+// use a global variable
+
+uint getID()
+{
+    return ++id;
+}
 
 struct User createUser(struct User user)
 {
@@ -22,8 +31,8 @@ struct User createUser(struct User user)
         return user;
     }
     pthread_mutex_lock(&lock);
-    user.id = ++pointer;
-    users[pointer] = user;
+    user.id = getID();
+    users[++pointer] = user;
     pthread_mutex_unlock(&lock);
     return user;
 }
@@ -33,16 +42,17 @@ struct User createUser(struct User user)
 
 struct User deleteUser(struct User user)
 {
-    if(user.id>pointer||user.id<0)
+    if (user.id > pointer || user.id < 0)
     {
         printf("Entry does not exist\n");
+        user.id = -1;
         return user;
     }
     pthread_mutex_lock(&lock);
-    struct User ret=users[user.id];
-    for(int i=user.id;i<pointer;i++)
+    struct User ret = users[user.id];
+    for (int i = user.id; i < pointer; i++)
     {
-        users[i]=users[i+1];
+        users[i] = users[i + 1];
     }
     pointer--;
     pthread_mutex_unlock(&lock);
@@ -53,12 +63,39 @@ struct User deleteUser(struct User user)
 
 struct User readUser(struct User user)
 {
-    if(user.id>pointer||user.id<0)
+    if (user.id > pointer || user.id < 0)
     {
         printf("Entry does not exist\n");
+        user.id = -1;
         return user;
     }
-    return users[user.id];
+    for (int i = 0; i <= pointer; i++)
+    {
+        if (users[i].id == user.id)
+        {
+            return users[i];
+        }
+    }
+    printf("User not found\n");
+    user.id = -1;
+    return user;
+}
+
+// Find user by ID and update all fields
+
+struct User updateUser(struct User user)
+{
+    if (user.id > pointer || user.id < 0)
+    {
+        printf("Entry does not exist\n");
+        user.id = -1;
+        return user;
+    }
+    uint i = user.id;
+    strcpy(users[i].name, user.name);
+    strcpy(users[i].email, user.email);
+    strcpy(users[i].password, user.password);
+    return users[i];
 }
 
 void *serveThread(void *args)
@@ -72,13 +109,17 @@ void *serveThread(void *args)
         // Create new User
         send_data.user = createUser(received_data.user);
     }
-    else if(received_data.delete)
-    {
-        send_data.user = deleteUser(received_data.user);
-    }
-    else if(received_data.read)
+    else if (received_data.read)
     {
         send_data.user = readUser(received_data.user);
+    }
+    else if (received_data.update)
+    {
+        send_data.user = updateUser(received_data.user);
+    }
+    else if (received_data.delete)
+    {
+        send_data.user = deleteUser(received_data.user);
     }
     write(new_socket, (struct data *)&send_data, sizeof(send_data));
     close(new_socket);
